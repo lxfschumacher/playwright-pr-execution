@@ -16,7 +16,7 @@ test.describe('Vue 3 Test Project', () => {
 
   test.describe('SearchBox Component', () => {
     test('should render search input', async ({ page }) => {
-      test.info().annotations.push({ type: 'component', description: 'SearchBox.vue' });
+      test.info().annotations.push({ type: 'component', description: 'src/components/SearchBox.vue' });
       const searchInput = page.getByTestId('search-input');
       await expect(searchInput).toBeVisible();
       await expect(searchInput).toHaveAttribute('placeholder', 'Search...');
