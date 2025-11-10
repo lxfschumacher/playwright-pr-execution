@@ -25,7 +25,7 @@ jobs:
         run: npm run preview &
 
       - name: Wait for server to be ready
-        run: npx wait-on http://localhost:5173
+        run: npx wait-on http://localhost:4173
 
       # 4️⃣ Install Playwright browsers
       - name: Install Playwright browsers
@@ -36,8 +36,12 @@ jobs:
         id: changed
         run: |
           git fetch origin main --depth=50
-          CHANGED=$(git diff origin/main...HEAD | grep '\.vue$' || true)
-          echo "CHANGED_VUE=$CHANGED" >> $GITHUB_OUTPUT
+          CHANGED=$(git diff --name-only origin/main...HEAD | grep '\.vue$' || true)
+    
+          # convert newlines to spaces for GitHub Actions output
+          CHANGED_SAFE=$(echo "$CHANGED" | tr '\n' ' ' | sed 's/ $//')
+    
+          echo "CHANGED_VUE=$CHANGED_SAFE" >> $GITHUB_OUTPUT
 
       # 6️⃣ Skip if no vue changes
       - name: Skip if no Vue changes
