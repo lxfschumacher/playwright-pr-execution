@@ -4,7 +4,7 @@
       <input
         v-model="searchQuery"
         type="text"
-        placeholder="Search..."
+        placeholder="Searching..."
         @input="handleSearch"
         data-testid="search-input"
       />
