@@ -1,0 +1,38 @@
+name: e2e-pr
+
+on:
+  pull_request:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: get changed vue files
+        id: changed
+        run: |
+          files=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}... | grep '\.vue$' || true)
+          echo "changed_vue=$files" >> $GITHUB_OUTPUT
+
+      - name: if none changed → skip
+        if: steps.changed.outputs.changed_vue == ''
+        run: echo "no vue changes → skipping tests"
+
+      - name: install deps
+        if: steps.changed.outputs.changed_vue != ''
+        run: npm ci
+
+      - name: install browsers
+        if: steps.changed.outputs.changed_vue != ''
+        run: npx playwright install --with-deps
+
+      - name: run only tests that match the annotation
+        if: steps.changed.outputs.changed_vue != ''
+        env:
+          CHANGED_VUE: ${{ steps.changed.outputs.changed_vue }}
+        run: |
+          # this returns e.g. "src/components/AddUserModal.vue"
+          # use it directly as grep target
+          npx playwright test --grep "$CHANGED_VUE"
