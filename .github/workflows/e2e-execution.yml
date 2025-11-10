@@ -25,7 +25,7 @@ jobs:
 
       - name: install deps
         if: steps.changed.outputs.changed_vue != ''
-        run: npm ci
+        run: npm i
 
       - name: install browsers
         if: steps.changed.outputs.changed_vue != ''
