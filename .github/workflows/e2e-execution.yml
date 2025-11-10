@@ -13,7 +13,8 @@ jobs:
       - name: get changed vue files
         id: changed
         run: |
-          files=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}... | grep '\.vue$' || true)
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          files=$(git diff --name-only FETCH_HEAD...HEAD | grep '\.vue$' || true)
           echo "changed_vue=$files" >> $GITHUB_OUTPUT
 
       - name: if none changed → skip
