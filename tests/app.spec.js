@@ -5,6 +5,10 @@ test.describe('Vue 3 Test Project', () => {
     await page.goto('/');
   });
 
+  test.afterEach(async ({ page }) => {
+    await page.close();
+  });
+
   test('should display the main heading', async ({ page }) => {
     await expect(page.locator('h1')).toContainText('Vue 3 Test Project');
   });
