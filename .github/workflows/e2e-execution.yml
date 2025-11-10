@@ -8,34 +8,51 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout with enough history
       - uses: actions/checkout@v4
         with:
           fetch-depth: 50
 
-      - name: get changed vue files
-        id: changed
-        run: |
-          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
-          files=$(git diff --name-only FETCH_HEAD...HEAD | grep '\.vue$' || true)
-          echo "changed_vue=$files" >> $GITHUB_OUTPUT
-
-      - name: if none changed → skip
-        if: steps.changed.outputs.changed_vue == ''
-        run: echo "no vue changes → skipping tests"
-
-      - name: install deps
-        if: steps.changed.outputs.changed_vue != ''
+      # 2️⃣ Install dependencies
+      - name: Install dependencies
         run: npm i
 
-      - name: install browsers
-        if: steps.changed.outputs.changed_vue != ''
+      # 3️⃣ Build the app
+      - name: Build app
+        run: npm run build
+
+      - name: Start server
+        run: npm run preview &
+
+      - name: Wait for server to be ready
+        run: npx wait-on http://localhost:5173
+
+      # 4️⃣ Install Playwright browsers
+      - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: run only tests that match the annotation
-        if: steps.changed.outputs.changed_vue != ''
-        env:
-          CHANGED_VUE: ${{ steps.changed.outputs.changed_vue }}
+      # 5️⃣ Detect changed .vue files in the PR
+      - name: Get changed Vue files
+        id: changed
         run: |
-          # this returns e.g. "src/components/AddUserModal.vue"
-          # use it directly as grep target
-          npx playwright test --grep "$CHANGED_VUE"
+          git fetch origin main --depth=50
+          CHANGED=$(git diff origin/main...HEAD | grep '\.vue$' || true)
+          echo "CHANGED_VUE=$CHANGED" >> $GITHUB_OUTPUT
+
+      # 6️⃣ Skip if no vue changes
+      - name: Skip if no Vue changes
+        if: steps.changed.outputs.CHANGED_VUE == ''
+        run: echo "No Vue changes → skipping tests"
+
+      # 7️⃣ Run only relevant tests
+      - name: Run Playwright tests for changed components
+        if: steps.changed.outputs.CHANGED_VUE != ''
+        env:
+          CHANGED_VUE: ${{ steps.changed.outputs.CHANGED_VUE }}
+        run: |
+          for file in $CHANGED_VUE; do
+            # Extract just the filename (basename) to match describe block
+            component=$(basename $file)
+            echo "Running tests for component: $component"
+            npx playwright test --grep "$component"
+          done
